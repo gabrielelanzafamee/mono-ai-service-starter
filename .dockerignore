@@ -1,0 +1,16 @@
+data/*
+!data/.gitkeep
+
+outputs/*
+!outputs/.gitkeep
+
+models/*
+!models/.gitkeep
+
+*.pyc
+*.env
+
+wandb/
+
+infrastructure/.terraform
+infrastructure/.terraform.lock.hcl

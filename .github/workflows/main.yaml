@@ -1,0 +1,122 @@
+# name: CI/CD Pipeline
+
+# on:
+#   push:
+#     branches:
+#       - main
+#   pull_request:
+#     branches:
+#       - main
+
+# jobs:
+#   build-and-test:
+#     runs-on: ubuntu-latest
+
+#     steps:
+#     - name: Checkout repository
+#       uses: actions/checkout@v4
+
+#     - name: Set up Node.js
+#       uses: actions/setup-node@v4
+#       with:
+#         node-version: '18' # Use a Node.js version compatible with your React app
+
+#     - name: Install dependencies
+#       run: npm ci # Use npm ci for clean installs in CI environments
+
+#     - name: Build React App
+#       run: npm run build
+#       env:
+#         # Add any environment variables required for your React build
+#         REACT_APP_FIREBASE_CONFIG: ${{ secrets.FIREBASE_CONFIG }}
+#         REACT_APP_APP_ID: ${{ secrets.APP_ID }}
+
+#     - name: Run tests (if any)
+#       # Replace with your actual test command, e.g., 'npm test'
+#       # If you don't have tests yet, you can comment this out or add a placeholder
+#       run: echo "No tests configured yet. Add 'npm test' or similar command here."
+
+#   # This job will be responsible for building and pushing Docker images
+#   # It will only run if the 'build-and-test' job succeeds
+#   build-docker-image:
+#     needs: build-and-test
+#     runs-on: ubuntu-latest
+#     if: github.ref == 'refs/heads/main' # Only run on pushes to main branch
+#     environment: production # Use a production environment for secrets management
+
+#     steps:
+#     - name: Checkout repository
+#       uses: actions/checkout@v4
+
+#     - name: Set up Docker Buildx
+#       uses: docker/setup-buildx-action@v3
+
+#     - name: Log in to Docker Hub (or other container registry)
+#       uses: docker/login-action@v3
+#       with:
+#         username: ${{ secrets.DOCKER_USERNAME }}
+#         password: ${{ secrets.DOCKER_PASSWORD }}
+#         # If using Azure Container Registry (ACR), use:
+#         # registry: youracrname.azurecr.io
+#         # username: ${{ secrets.AZURE_ACR_USERNAME }}
+#         # password: ${{ secrets.AZURE_ACR_PASSWORD }}
+
+#     - name: Build and push Docker image
+#       uses: docker/build-push-action@v5
+#       with:
+#         context: .
+#         push: true
+#         tags: your-dockerhub-username/your-app-name:latest # Replace with your image name
+#         # If using ACR:
+#         # tags: youracrname.azurecr.io/your-app-name:latest
+#         cache-from: type=gha
+#         cache-to: type=gha,mode=max
+
+#   # This job will handle the deployment of your application
+#   # It will only run if the 'build-docker-image' job succeeds
+#   deploy-to-azure:
+#     needs: build-docker-image
+#     runs-on: ubuntu-latest
+#     if: github.ref == 'refs/heads/main' # Only deploy on pushes to main branch
+#     environment: production # Use a production environment for secrets management
+
+#     steps:
+#     - name: Checkout repository
+#       uses: actions/checkout@v4
+
+#     - name: Azure Login
+#       uses: azure/login@v2
+#       with:
+#         creds: ${{ secrets.AZURE_CREDENTIALS }} # Azure service principal credentials
+
+#     - name: Deploy to Azure App Service (Example for web app)
+#       # This is a placeholder. You'll replace this with your actual deployment steps
+#       # based on your Azure infrastructure (e.g., App Service, AKS, VM).
+#       # Example for App Service:
+#       uses: azure/webapps-deploy@v3
+#       with:
+#         app-name: your-app-service-name # Replace with your Azure App Service name
+#         slot-name: 'production' # Or 'staging' for testing
+#         images: 'your-dockerhub-username/your-app-name:latest' # Image to deploy
+#         # If using ACR:
+#         # images: 'youracrname.azurecr.io/your-app-name:latest'
+
+#     # - name: Run Terraform Apply (if managing infrastructure via CI/CD)
+#       # This step is for applying Terraform changes directly from CI/CD.
+#       # It's often better to have a separate job or manual trigger for infrastructure changes.
+#       # Uncomment and configure if you want to manage infrastructure directly via this pipeline.
+#       # - name: Setup Terraform
+#       #   uses: hashicorp/setup-terraform@v3
+#       #   with:
+#       #     terraform_version: 1.x.x # Specify your Terraform version
+#       # - name: Terraform Init
+#       #   run: terraform init
+#       #   working-directory: ./terraform/azure # Path to your Terraform Azure config
+#       # - name: Terraform Apply
+#       #   run: terraform apply -auto-approve
+#       #   working-directory: ./terraform/azure
+#       #   env:
+#       #     ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+#       #     ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+#       #     ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+#       #     ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
